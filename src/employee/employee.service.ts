@@ -9,65 +9,81 @@ export class EmployeeService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getEmployees(query: GetEmployeesDto) {
-    const { page, sortBy, sortOrder, ITEM_PER_PAGE } = query;
-    const offset = (Number(page) - 1) * Number(ITEM_PER_PAGE);
+    try {
+      const { page, sortBy, sortOrder, ITEM_PER_PAGE } = query;
+      const offset = (Number(page) - 1) * Number(ITEM_PER_PAGE);
 
-    const employees = await this.prisma.employee.findMany({
-      ...(ITEM_PER_PAGE ? { take: Number(ITEM_PER_PAGE) } : {}),
-      ...(offset ? { skip: offset } : {}),
-      ...(sortBy && sortOrder ? { orderBy: { [sortBy]: sortOrder } } : {}),
-    });
+      const employees = await this.prisma.employee.findMany({
+        ...(ITEM_PER_PAGE ? { take: Number(ITEM_PER_PAGE) } : {}),
+        ...(offset ? { skip: offset } : {}),
+        ...(sortBy && sortOrder ? { orderBy: { [sortBy]: sortOrder } } : {}),
+      });
 
-    const totalEmployees = await this.prisma.employee.findMany();
+      const totalEmployees = await this.prisma.employee.findMany();
 
-    return {
-      data: employees,
-      length: totalEmployees.length,
-      totalPage: Math.ceil(totalEmployees.length / Number(ITEM_PER_PAGE)),
-    };
+      return {
+        data: employees,
+        length: totalEmployees.length,
+        totalPage: Math.ceil(totalEmployees.length / Number(ITEM_PER_PAGE)),
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createEmployee(body: CreateEmployeeDto) {
-    const employee = await this.prisma.employee.create({
-      data: {
-        firstName: body.firstName,
-        lastName: body.lastName,
-        position: body.position,
-        phone: body.phone,
-        email: body.email,
-      },
-    });
+    try {
+      const employee = await this.prisma.employee.create({
+        data: {
+          firstName: body.firstName,
+          lastName: body.lastName,
+          position: body.position,
+          phone: body.phone,
+          email: body.email,
+        },
+      });
 
-    return employee;
+      return employee;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateEmployee(id: string, body: UpdateEmployeeDto) {
-    const { firstName, lastName, position, phone, email } = body;
-    const updateEmployee = await this.prisma.employee.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        ...(firstName ? { firstName } : {}),
-        ...(lastName ? { lastName } : {}),
-        ...(position ? { position } : {}),
-        ...(phone ? { phone } : {}),
-        ...(email ? { email } : {}),
-      },
-    });
+    try {
+      const { firstName, lastName, position, phone, email } = body;
+      const updateEmployee = await this.prisma.employee.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          ...(firstName ? { firstName } : {}),
+          ...(lastName ? { lastName } : {}),
+          ...(position ? { position } : {}),
+          ...(phone ? { phone } : {}),
+          ...(email ? { email } : {}),
+        },
+      });
 
-    return updateEmployee;
+      return updateEmployee;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async deleteEmployee(id: string) {
-    await this.prisma.employee.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    try {
+      await this.prisma.employee.delete({
+        where: {
+          id: Number(id),
+        },
+      });
 
-    return {
-      message: `Employee id ${id} is deleted.`,
-    };
+      return {
+        message: `Employee id ${id} is deleted.`,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 }
