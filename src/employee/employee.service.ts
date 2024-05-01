@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetEmployeesDto } from './dto/get-employees.dto';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -33,17 +33,29 @@ export class EmployeeService {
 
   async createEmployee(body: CreateEmployeeDto) {
     try {
-      const employee = await this.prisma.employee.create({
-        data: {
-          firstName: body.firstName,
-          lastName: body.lastName,
-          position: body.position,
-          phone: body.phone,
+      const checkDuplicateEmail = await this.prisma.employee.findFirst({
+        where: {
           email: body.email,
         },
       });
 
-      return employee;
+      if (!checkDuplicateEmail) {
+        const employee = await this.prisma.employee.create({
+          data: {
+            firstName: body.firstName,
+            lastName: body.lastName,
+            position: body.position,
+            phone: body.phone,
+            email: body.email,
+          },
+        });
+        return employee;
+      } else {
+        throw new HttpException(
+          'email is already exist',
+          HttpStatus.NOT_ACCEPTABLE,
+        );
+      }
     } catch (error) {
       throw error;
     }
@@ -52,20 +64,50 @@ export class EmployeeService {
   async updateEmployee(id: string, body: UpdateEmployeeDto) {
     try {
       const { firstName, lastName, position, phone, email } = body;
-      const updateEmployee = await this.prisma.employee.update({
-        where: {
-          id: Number(id),
-        },
-        data: {
-          ...(firstName ? { firstName } : {}),
-          ...(lastName ? { lastName } : {}),
-          ...(position ? { position } : {}),
-          ...(phone ? { phone } : {}),
-          ...(email ? { email } : {}),
-        },
-      });
 
-      return updateEmployee;
+      if (email) {
+        const checkDuplicateEmail = await this.prisma.employee.findFirst({
+          where: {
+            email: body.email,
+          },
+        });
+
+        if (!checkDuplicateEmail) {
+          const updateEmployee = await this.prisma.employee.update({
+            where: {
+              id: Number(id),
+            },
+            data: {
+              email,
+              ...(firstName ? { firstName } : {}),
+              ...(lastName ? { lastName } : {}),
+              ...(position ? { position } : {}),
+              ...(phone ? { phone } : {}),
+            },
+          });
+
+          return updateEmployee;
+        } else {
+          throw new HttpException(
+            'email is already exist',
+            HttpStatus.NOT_ACCEPTABLE,
+          );
+        }
+      } else {
+        const updateEmployee = await this.prisma.employee.update({
+          where: {
+            id: Number(id),
+          },
+          data: {
+            ...(firstName ? { firstName } : {}),
+            ...(lastName ? { lastName } : {}),
+            ...(position ? { position } : {}),
+            ...(phone ? { phone } : {}),
+          },
+        });
+
+        return updateEmployee;
+      }
     } catch (error) {
       throw error;
     }
